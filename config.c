@@ -18,7 +18,8 @@ void alloc_config(struct config * cfg, const char * device, int num_axes, int nu
 
 	cfg->axis_threshold = malloc(sizeof(__s16) * num_axes);
 	cfg->axis_last = malloc(sizeof(__s16) * num_axes);
-	cfg->axis_keycode = malloc(sizeof(unsigned int) * num_axes);
+	cfg->axis_positive_keycode = malloc(sizeof(unsigned int) * num_axes);
+	cfg->axis_negative_keycode = malloc(sizeof(unsigned int) * num_axes);
 
 	cfg->button_keycode = malloc(sizeof(unsigned int) * num_buttons);
 }
@@ -26,9 +27,12 @@ void alloc_config(struct config * cfg, const char * device, int num_axes, int nu
 void free_config(struct config * cfg)
 {
 	free(cfg->device);
+
 	free(cfg->axis_threshold);
 	free(cfg->axis_last);
-	free(cfg->axis_keycode);
+	free(cfg->axis_positive_keycode);
+	free(cfg->axis_negative_keycode);
+
 	free(cfg->button_keycode);
 }
 
@@ -62,20 +66,29 @@ void mkconfig(const char * device, struct config * cfg)
 	if (display != NULL)
 	{
 		int i;
+		int j = 0;
 		char keysym[2];
 		keysym[1] = '\0';
+
 		for (i = 0; i < cfg->num_buttons; i++)
 		{
 			keysym[0] = 'a' + (i % 26);
 			cfg->button_keycode[i] = keycode_from_string(keysym, display);
 		}
+
 		for (i = 0; i < cfg->num_axes; i++)
 		{
 			cfg->axis_threshold[i] = 32767;
 
-			keysym[0] = 'a' + (i % 26);
-			cfg->axis_keycode[i] = keycode_from_string(keysym, display);
+			keysym[0] = 'a' + (j % 26);
+			j++;
+			cfg->axis_positive_keycode[i] = keycode_from_string(keysym, display);
+
+			keysym[0] = 'a' + (j % 26);
+			j++;
+			cfg->axis_negative_keycode[i] = keycode_from_string(keysym, display);
 		}
+
 		XCloseDisplay(display);
 	}
 }

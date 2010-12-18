@@ -13,7 +13,8 @@ struct config
 
     __s16 * axis_threshold;
     __s16 * axis_last;
-	unsigned int * axis_keycode;
+	unsigned int * axis_positive_keycode;
+	unsigned int * axis_negative_keycode;
 
 	unsigned int * button_keycode;
 };

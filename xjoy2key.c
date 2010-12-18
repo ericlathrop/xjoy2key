@@ -54,16 +54,24 @@ void handle_event(const struct js_event *event, Display * display, struct config
     {
         printf("axis %d %d\n", event->number, event->value);
 
+		__s16 vnew = event->value;
+		__s16 vold = cfg->axis_last[event->number];
+		__s16 vthresh = cfg->axis_threshold[event->number];
 
-		int old_out_thresh = axis_outside_threshold(event->number, cfg->axis_last[event->number], cfg);
-		int new_out_thresh = axis_outside_threshold(event->number, event->value, cfg);
+		// positive axis pressed
+		if ((vnew >= vthresh) && (vold < vthresh))
+			XTestFakeKeyEvent(display, cfg->axis_positive_keycode[event->number], 1, 0);
+		// positive axis released
+		else if ((vnew < vthresh) && (vold >= vthresh))
+			XTestFakeKeyEvent(display, cfg->axis_positive_keycode[event->number], 0, 0);
+		// negative axis pressed
+		else if ((vnew <= -vthresh) && (vold > -vthresh))
+			XTestFakeKeyEvent(display, cfg->axis_negative_keycode[event->number], 1, 0);
+		// negative axis released
+		else if ((vnew > -vthresh) && (vold <= -vthresh))
+			XTestFakeKeyEvent(display, cfg->axis_negative_keycode[event->number], 0, 0);
 
-		if (new_out_thresh != old_out_thresh)
-		{
-			XTestFakeKeyEvent(display, cfg->axis_keycode[event->number], new_out_thresh, 0);
-			XFlush(display);
-		}
-
+		XFlush(display);
 		cfg->axis_last[event->number] = event->value;
     }
 }
