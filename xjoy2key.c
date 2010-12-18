@@ -8,11 +8,24 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include <linux/joystick.h>
+
 int done = 0;
-void sigint(int s)
+
+void handle_event(const struct js_event *event)
 {
-    printf("Got SIGINT, exiting.");
-    done = 1;
+    if (event->type & JS_EVENT_INIT)
+    {
+        printf("synthetic ");
+    }
+    if (event->type & JS_EVENT_BUTTON)
+    {
+        printf("button %d %s\n", event->number, event->value == 1 ? "pushed" : "released");
+    }
+    if (event->type & JS_EVENT_AXIS)
+    {
+        printf("axis %d %d\n", event->number, event->value);
+    }
 }
 
 int main(int argc, char * argv[])
@@ -23,21 +36,17 @@ int main(int argc, char * argv[])
         perror("Unable to open joystick");
         exit(1);
     }
-    
-    struct sigaction new_action, old_action;
-    new_action.sa_handler = sigint;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = 0;
-    
-    sigaction(SIGINT, NULL, &old_action);
-    if (old_action.sa_handler != SIG_IGN)
-        sigaction(SIGINT, &new_action, NULL);
-    
+
     while (!done)
     {
-        printf("1");
+        struct js_event event;
+
+        if (read(fd, &event, sizeof(struct js_event)) == sizeof(struct js_event))
+        {
+            handle_event(&event);
+        }
         usleep(100);
     }
-    
+
     return close(fd);
 }
