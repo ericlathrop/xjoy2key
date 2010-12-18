@@ -6,21 +6,25 @@
 
 struct config
 {
-	char * device;
+    char * device;
+    
+    unsigned int num_buttons;
+    unsigned int num_axes;
 
-	unsigned int num_buttons;
-	unsigned int num_axes;
+    __s16 * axis_positive_threshold;
+    __s16 * axis_negative_threshold;
 
-    __s16 * axis_threshold;
     __s16 * axis_last;
-	unsigned int * axis_positive_keycode;
-	unsigned int * axis_negative_keycode;
+    
+    unsigned int * axis_positive_keycode;
+    unsigned int * axis_negative_keycode;
 
-	unsigned int * button_keycode;
+    unsigned int * button_keycode;
 };
 
 void alloc_config(struct config * cfg, const char * device, int num_axes, int num_buttons);
 void free_config(struct config * cfg);
-void mkconfig(const char * device, struct config * cfg);
+void probe_config(const char * device, struct config * cfg);
+void fill_config(struct config * cfg);
 
 #endif

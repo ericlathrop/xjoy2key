@@ -16,7 +16,15 @@ void alloc_config(struct config * cfg, const char * device, int num_axes, int nu
 	cfg->num_axes = num_axes;
 	cfg->num_buttons = num_buttons;
 
-	cfg->axis_threshold = malloc(sizeof(__s16) * num_axes);
+	cfg->axis_positive_threshold = malloc(sizeof(__s16) * num_axes);
+	cfg->axis_negative_threshold = malloc(sizeof(__s16) * num_axes);
+	int i;
+	for (i = 0; i < num_axes; i++)
+	{
+		cfg->axis_positive_threshold[i] = 32767;
+		cfg->axis_negative_threshold[i] = -32767;
+	}
+
 	cfg->axis_last = malloc(sizeof(__s16) * num_axes);
 	cfg->axis_positive_keycode = malloc(sizeof(unsigned int) * num_axes);
 	cfg->axis_negative_keycode = malloc(sizeof(unsigned int) * num_axes);
@@ -28,7 +36,8 @@ void free_config(struct config * cfg)
 {
 	free(cfg->device);
 
-	free(cfg->axis_threshold);
+	free(cfg->axis_positive_threshold);
+	free(cfg->axis_negative_threshold);
 	free(cfg->axis_last);
 	free(cfg->axis_positive_keycode);
 	free(cfg->axis_negative_keycode);
@@ -36,7 +45,7 @@ void free_config(struct config * cfg)
 	free(cfg->button_keycode);
 }
 
-void mkconfig(const char * device, struct config * cfg)
+void probe_config(const char * device, struct config * cfg)
 {
     int fd = open("/dev/input/js0", O_RDONLY);
     if (fd == -1)
@@ -61,7 +70,10 @@ void mkconfig(const char * device, struct config * cfg)
     close(fd);
 
 	alloc_config(cfg, device, max_axis + 1, max_button + 1);
+}
 
+void fill_config(struct config * cfg)
+{
 	Display * display = open_display("xjoy2key");
 	if (display != NULL)
 	{
@@ -78,7 +90,8 @@ void mkconfig(const char * device, struct config * cfg)
 
 		for (i = 0; i < cfg->num_axes; i++)
 		{
-			cfg->axis_threshold[i] = 32767;
+			cfg->axis_positive_threshold[i] = 32767;
+			cfg->axis_negative_threshold[i] = -32767;
 
 			keysym[0] = 'a' + (j % 26);
 			j++;

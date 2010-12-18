@@ -28,11 +28,6 @@ void sigint(int s)
 	done = 1;
 }
 
-inline int axis_outside_threshold(unsigned int axis, __s16 value, struct config * cfg)
-{
-	return value >= cfg->axis_threshold[axis] || value <= -cfg->axis_threshold[axis];
-}
-
 void handle_event(const struct js_event *event, Display * display, struct config * cfg)
 {
     if (event->type & JS_EVENT_INIT)
@@ -47,6 +42,7 @@ void handle_event(const struct js_event *event, Display * display, struct config
     if (event->type & JS_EVENT_BUTTON)
     {
         printf("button %d %s\n", event->number, event->value == 1 ? "pushed" : "released");
+
 		XTestFakeKeyEvent(display, cfg->button_keycode[event->number], event->value, 0);
 		XFlush(display);
     }
@@ -56,19 +52,20 @@ void handle_event(const struct js_event *event, Display * display, struct config
 
 		__s16 vnew = event->value;
 		__s16 vold = cfg->axis_last[event->number];
-		__s16 vthresh = cfg->axis_threshold[event->number];
+		__s16 pthresh = cfg->axis_positive_threshold[event->number];
+		__s16 nthresh = cfg->axis_negative_threshold[event->number];
 
 		// positive axis pressed
-		if ((vnew >= vthresh) && (vold < vthresh))
+		if ((vnew >= pthresh) && (vold < pthresh))
 			XTestFakeKeyEvent(display, cfg->axis_positive_keycode[event->number], 1, 0);
 		// positive axis released
-		else if ((vnew < vthresh) && (vold >= vthresh))
+		else if ((vnew < pthresh) && (vold >= pthresh))
 			XTestFakeKeyEvent(display, cfg->axis_positive_keycode[event->number], 0, 0);
 		// negative axis pressed
-		else if ((vnew <= -vthresh) && (vold > -vthresh))
+		else if ((vnew <= nthresh) && (vold > nthresh))
 			XTestFakeKeyEvent(display, cfg->axis_negative_keycode[event->number], 1, 0);
 		// negative axis released
-		else if ((vnew > -vthresh) && (vold <= -vthresh))
+		else if ((vnew > nthresh) && (vold <= nthresh))
 			XTestFakeKeyEvent(display, cfg->axis_negative_keycode[event->number], 0, 0);
 
 		XFlush(display);
@@ -79,9 +76,10 @@ void handle_event(const struct js_event *event, Display * display, struct config
 int main(int argc, const char * argv[])
 {
 	struct config cfg;
-	mkconfig("/dev/input/js0", &cfg);
+	probe_config("/dev/input/js0", &cfg);
+	fill_config(&cfg);
 
-    int fd = open("/dev/input/js0", O_RDONLY);
+    int fd = open(cfg.device, O_RDONLY);
     if (fd == -1)
     {
         perror("Unable to open joystick");
