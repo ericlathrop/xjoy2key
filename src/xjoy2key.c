@@ -94,11 +94,11 @@ void handle_event(const struct js_event *event, Display * display, struct config
 int main(int argc, const char * argv[])
 {
     if (
-        (strcmp("-h", argv[1]) == 0) || 
-        (strcmp("--help", argv[1]) == 0) || 
         (argc < 2) || 
         (argc > 3) ||
-        ((argc == 3) && (strcmp("--config", argv[1]) != 0))
+        ((argc == 3) && (strcmp("--config", argv[1]) != 0)) ||
+        (strcmp("-h", argv[1]) == 0) || 
+        (strcmp("--help", argv[1]) == 0)
         )
     {
         fprintf(stderr, "Usage: %s config_path\n", argv[0]);
