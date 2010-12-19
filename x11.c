@@ -43,3 +43,11 @@ unsigned int keycode_from_string(const char * keysym_name, Display * display)
     return XKeysymToKeycode(display, sym);
 }
 
+const char * string_from_keycode(unsigned int keycode, Display * display)
+{
+    KeySym sym = XKeycodeToKeysym(display, keycode, 0); // FIXME: wth is index?
+    if (sym == NoSymbol)
+        return NULL;
+
+    return XKeysymToString(sym);
+}

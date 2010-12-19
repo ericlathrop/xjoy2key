@@ -46,7 +46,7 @@ void free_config(struct config * cfg)
     free(cfg->button_keycode);
 }
 
-void probe_config(const char * device, struct config * cfg)
+void probe_config(struct config * cfg, const char * device)
 {
     int fd = open("/dev/input/js0", O_RDONLY);
     if (fd == -1)
@@ -101,7 +101,7 @@ void fill_config(struct config * cfg, Display * display)
     }
 }
 
-void read_config(const char * path, struct config * cfg, Display * display)
+void read_config(struct config * cfg, Display * display, const char * path)
 {
     FILE * fp = fopen(path, "r");
 
@@ -115,10 +115,13 @@ void read_config(const char * path, struct config * cfg, Display * display)
         const char * delim = " \t\n";
         char * token = strtok_r(line, delim, &saveptr);
 
+        if ((token == NULL) || (token[0] == '#'))
+            continue;
+
         if (strcmp("device", token) == 0)
         {
             token = strtok_r(NULL, delim, &saveptr);
-            probe_config(token, cfg);
+            probe_config(cfg, token);
             fill_config(cfg, display);
         }
         else if (strcmp("axis", token) == 0)
@@ -189,3 +192,26 @@ void read_config(const char * path, struct config * cfg, Display * display)
     fclose(fp);
 }
 
+void write_config(struct config * cfg, Display * display, FILE * fp)
+{
+    fprintf(fp, "# example xjoy2key configuration file, please modify\n");
+    fprintf(fp, "# find key names in /usr/include/X11/keysymdef.h\n\n");
+
+    fprintf(fp, "device %s\n\n", cfg->device);
+
+    fprintf(fp, "# axis +/-number key threshold\n");
+    int i;
+    for (i = 0; i < cfg->num_axes; i++)
+    {
+        fprintf(fp, "axis +%d %s %d\n", i, string_from_keycode(cfg->axis_positive_keycode[i], display), cfg->axis_positive_threshold[i]);
+        fprintf(fp, "axis -%d %s %d\n", i, string_from_keycode(cfg->axis_negative_keycode[i], display), cfg->axis_negative_threshold[i]);
+    }
+
+    fprintf(fp, "\n");
+    fprintf(fp, "# button number key\n");
+
+    for (i = 0; i < cfg->num_axes; i++)
+    {
+        fprintf(fp, "button %d %s\n", i, string_from_keycode(cfg->button_keycode[i], display));
+    }
+}

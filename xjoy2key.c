@@ -75,9 +75,16 @@ void handle_event(const struct js_event *event, Display * display, struct config
 
 int main(int argc, const char * argv[])
 {
-    if ((argc != 2) || (strcmp("-h", argv[1]) == 0) || (strcmp("--help", argv[1]) == 0))
+    if (
+        (strcmp("-h", argv[1]) == 0) || 
+        (strcmp("--help", argv[1]) == 0) || 
+        (argc < 2) || 
+        (argc > 3) ||
+        ((argc == 3) && (strcmp("--config", argv[1]) != 0))
+        )
     {
         fprintf(stderr, "Usage: %s config_path\n", argv[0]);
+        fprintf(stderr, "       %s --config js_device_path\n", argv[0]);
         exit(-1);
     }
 
@@ -87,8 +94,16 @@ int main(int argc, const char * argv[])
 
     struct config cfg;
 
+    if (strcmp("--config", argv[1]) == 0)
+    {
+        probe_config(&cfg, argv[2]);
+        fill_config(&cfg, display);
+        write_config(&cfg, display, stdout);
+        exit(0);
+    }
+
     if (file_exists(argv[1]))
-        read_config(argv[1], &cfg, display);
+        read_config(&cfg, display, argv[1]);
     else
     {
         fprintf(stderr, "File doesn't exist: %s\n", argv[1]);
@@ -98,7 +113,7 @@ int main(int argc, const char * argv[])
     int fd = open(cfg.device, O_RDONLY);
     if (fd == -1)
     {
-        perror("Unable to open joystick");
+        fprintf(stderr, "Unable to open joystick '%s': %s\n", cfg.device, strerror(errno));
         exit(-1);
     }
 

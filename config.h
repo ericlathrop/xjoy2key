@@ -25,8 +25,9 @@ struct config
 
 void alloc_config(struct config * cfg, const char * device, int num_axes, int num_buttons);
 void free_config(struct config * cfg);
-void probe_config(const char * device, struct config * cfg);
+void probe_config(struct config * cfg, const char * device);
 void fill_config(struct config * cfg, Display * display);
-void read_config(const char * path, struct config * cfg, Display * display);
+void read_config(struct config * cfg, Display * display, const char * path);
+void write_config(struct config * cfg, Display * display, FILE * fp);
 
 #endif
