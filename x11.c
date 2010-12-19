@@ -37,9 +37,9 @@ Display * open_display(const char * prog_name)
 
 unsigned int keycode_from_string(const char * keysym_name, Display * display)
 {
-	KeySym sym = XStringToKeysym(keysym_name);
-	if (sym == NoSymbol)
-		return 0;
-	return XKeysymToKeycode(display, sym);
+    KeySym sym = XStringToKeysym(keysym_name);
+    if (sym == NoSymbol)
+        return 0;
+    return XKeysymToKeycode(display, sym);
 }
 

@@ -3,6 +3,7 @@
 #define __CONFIG_H
 
 #include <linux/joystick.h>
+#include "x11.h"
 
 struct config
 {
@@ -25,6 +26,7 @@ struct config
 void alloc_config(struct config * cfg, const char * device, int num_axes, int num_buttons);
 void free_config(struct config * cfg);
 void probe_config(const char * device, struct config * cfg);
-void fill_config(struct config * cfg);
+void fill_config(struct config * cfg, Display * display);
+void read_config(const char * path, struct config * cfg, Display * display);
 
 #endif
