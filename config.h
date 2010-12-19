@@ -30,4 +30,6 @@ void fill_config(struct config * cfg, Display * display);
 void read_config(struct config * cfg, Display * display, const char * path);
 void write_config(struct config * cfg, Display * display, FILE * fp);
 
+#define KEYSYMDEF_PATH "/usr/include/X11/keysymdef.h"
+
 #endif

@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "config.h"
 #include "x11.h"
@@ -51,8 +52,8 @@ void probe_config(struct config * cfg, const char * device)
     int fd = open("/dev/input/js0", O_RDONLY);
     if (fd == -1)
     {
-        perror("Unable to open joystick");
-        exit(1);
+        fprintf(stderr, "Unable to open joystick '%s': %s\n", device, strerror(errno));
+        exit(-1);
     }
 
     int max_button = 0;
@@ -121,12 +122,24 @@ void read_config(struct config * cfg, Display * display, const char * path)
         if (strcmp("device", token) == 0)
         {
             token = strtok_r(NULL, delim, &saveptr);
+            if (token == NULL)
+            {
+                fprintf(stderr, "Line %d: missing device path\n", l);
+                exit(-1);
+            }
+
             probe_config(cfg, token);
             fill_config(cfg, display);
         }
         else if (strcmp("axis", token) == 0)
         {
             token = strtok_r(NULL, delim, &saveptr);
+            if (token == NULL)
+            {
+                fprintf(stderr, "Line %d: missing axis number\n", l);
+                exit(-1);
+            }
+
             int negative = token[0] == '-';
 
             if (negative || (token[0] == '+'))
@@ -138,12 +151,17 @@ void read_config(struct config * cfg, Display * display, const char * path)
             if ((num >= 0) && (num < cfg->num_axes))
             {
                 token = strtok_r(NULL, delim, &saveptr);
-                int key = keycode_from_string(token, display);
+                if (token == NULL)
+                {
+                    fprintf(stderr, "Line %d: missing key name\n", l);
+                    exit(-1);
+                }
 
+                int key = keycode_from_string(token, display);
                 if (key == 0)
                 {
-                    fprintf(stderr, "Line %d: unknown key \'%s\'\n", l, token);
-                    exit(1);
+                    fprintf(stderr, "Line %d: unknown key \'%s\', please check keys listed in %s\n", l, token, KEYSYMDEF_PATH);
+                    exit(-1);
                 }
 
                 if (negative)
@@ -167,17 +185,28 @@ void read_config(struct config * cfg, Display * display, const char * path)
         else if (strcmp("button", token) == 0)
         {
             token = strtok_r(NULL, delim, &saveptr);
+            if (token == NULL)
+            {
+                fprintf(stderr, "Line %d: missing button number\n", l);
+                exit(-1);
+            }
+
             int num;
             sscanf(token, "%d", &num);
 
             if ((num >= 0) && (num < cfg->num_buttons))
             {
                 token = strtok_r(NULL, delim, &saveptr);
+                if (token == NULL)
+                {
+                    fprintf(stderr, "Line %d: missing key name\n", l);
+                    exit(-1);
+                }
                 int key = keycode_from_string(token, display);
 
                 if (key == 0)
                 {
-                    fprintf(stderr, "Line %d: unknown key \'%s\'\n", l, token);
+                    fprintf(stderr, "Line %d: unknown key \'%s\', please check keys listed in %s\n", l, token, KEYSYMDEF_PATH);
                     exit(1);
                 }
 
@@ -195,7 +224,7 @@ void read_config(struct config * cfg, Display * display, const char * path)
 void write_config(struct config * cfg, Display * display, FILE * fp)
 {
     fprintf(fp, "# example xjoy2key configuration file, please modify\n");
-    fprintf(fp, "# find key names in /usr/include/X11/keysymdef.h\n\n");
+    fprintf(fp, "# find key names in %s\n\n", KEYSYMDEF_PATH);
 
     fprintf(fp, "device %s\n\n", cfg->device);
 
